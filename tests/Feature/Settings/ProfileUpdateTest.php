@@ -20,6 +20,7 @@ test('profile information can be updated', function () {
         ->patch(route('profile.update'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'locale' => 'ru',
         ]);
 
     $response
@@ -30,24 +31,24 @@ test('profile information can be updated', function () {
 
     expect($user->name)->toBe('Test User');
     expect($user->email)->toBe('test@example.com');
-    expect($user->email_verified_at)->toBeNull();
+    expect($user->locale->value)->toBe('ru');
 });
 
-test('email verification status is unchanged when the email address is unchanged', function () {
+test('profile locale must be supported', function () {
     $user = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
+        ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'name' => $user->name,
             'email' => $user->email,
+            'locale' => 'de',
         ]);
 
     $response
-        ->assertSessionHasNoErrors()
+        ->assertSessionHasErrors('locale')
         ->assertRedirect(route('profile.edit'));
-
-    expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
 test('user can delete their account', function () {

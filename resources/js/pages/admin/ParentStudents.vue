@@ -1,0 +1,17 @@
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+
+defineProps<{
+    links: unknown;
+    parents: unknown;
+    students: unknown;
+}>();
+</script>
+
+<template>
+    <Head title="Parent-Student Links" />
+    <div class="p-6">
+        <h1 class="text-2xl font-semibold">Parent-student links</h1>
+        <p class="mt-2 text-sm text-muted-foreground">Admin stub — UI in stage 3.</p>
+    </div>
+</template>

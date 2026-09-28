@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from '@lucide/vue';
+import {
+    BookOpen,
+    GraduationCap,
+    LayoutGrid,
+    Library,
+    LineChart,
+    Users,
+} from '@lucide/vue';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,29 +23,75 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useAuth } from '@/composables/useAuth';
 import { dashboard } from '@/routes';
+import { index as adminStudentProgress } from '@/routes/admin/student-progress';
+import { index as adminUsers } from '@/routes/admin/users';
+import { index as adminWordSets } from '@/routes/admin/word-sets';
+import { index as parentAnalytics } from '@/routes/parent/analytics';
+import { index as studentReviews } from '@/routes/student/reviews';
+import { index as studentWordSets } from '@/routes/student/word-sets';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+const { t } = useI18n();
+const { hasRole } = useAuth();
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: t('nav.dashboard'),
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    if (hasRole('student')) {
+        items.push(
+            {
+                title: t('nav.reviews'),
+                href: studentReviews(),
+                icon: BookOpen,
+            },
+            {
+                title: t('nav.myWordSets'),
+                href: studentWordSets(),
+                icon: Library,
+            },
+        );
+    }
+
+    if (hasRole('parent')) {
+        items.push({
+            title: t('nav.children'),
+            href: parentAnalytics(),
+            icon: LineChart,
+        });
+    }
+
+    if (hasRole('admin')) {
+        items.push(
+            {
+                title: t('nav.users'),
+                href: adminUsers(),
+                icon: Users,
+            },
+            {
+                title: t('nav.studentProgress'),
+                href: adminStudentProgress(),
+                icon: GraduationCap,
+            },
+            {
+                title: t('nav.dictionaries'),
+                href: adminWordSets(),
+                icon: Library,
+            },
+        );
+    }
+
+    return items;
+});
+
+const footerNavItems: NavItem[] = [];
 </script>
 
 <template>

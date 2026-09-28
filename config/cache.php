@@ -122,6 +122,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public Dictionaries Cache Store
+    |--------------------------------------------------------------------------
+    |
+    | System language/word-set catalogues are cached on this store. Defaults to
+    | the application cache store. Set PUBLIC_DICTIONARIES_CACHE_STORE=redis
+    | when Redis is available.
+    |
+    */
+
+    'public_dictionaries_store' => env('PUBLIC_DICTIONARIES_CACHE_STORE', env('CACHE_STORE', 'database')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Serializable Classes
     |--------------------------------------------------------------------------
     |
