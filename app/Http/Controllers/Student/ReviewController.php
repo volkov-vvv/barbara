@@ -148,16 +148,26 @@ class ReviewController extends Controller
 
     private function touchReviewSession(User $user, int $quality): void
     {
+        $now = Carbon::now();
+
         $session = ReviewSession::query()
             ->where('user_id', $user->id)
             ->whereNull('finished_at')
             ->latest('started_at')
             ->first();
 
+        // One open session must not span calendar days — otherwise the
+        // regularity chart (grouped by started_at) hides later reviews.
+        if ($session !== null && ! $session->started_at->isSameDay($now)) {
+            $session->finished_at = $session->started_at->copy()->endOfDay();
+            $session->save();
+            $session = null;
+        }
+
         if ($session === null) {
             $session = ReviewSession::query()->create([
                 'user_id' => $user->id,
-                'started_at' => Carbon::now(),
+                'started_at' => $now,
                 'correct_count' => 0,
                 'wrong_count' => 0,
             ]);

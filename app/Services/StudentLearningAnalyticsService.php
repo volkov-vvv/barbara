@@ -30,12 +30,12 @@ class StudentLearningAnalyticsService
             ->get()
             ->keyBy('user_id');
 
-        $reviewsTodayByUser = ReviewSession::query()
+        $reviewsTodayByUser = UserWordProgress::query()
             ->whereIn('user_id', $childIds)
-            ->whereDate('started_at', Carbon::today())
+            ->whereDate('last_reviewed_at', Carbon::today())
             ->groupBy('user_id')
             ->selectRaw('user_id')
-            ->selectRaw('COALESCE(SUM(correct_count + wrong_count), 0) as reviews')
+            ->selectRaw('COUNT(*) as reviews')
             ->get()
             ->keyBy('user_id');
 
@@ -75,16 +75,45 @@ class StudentLearningAnalyticsService
             return collect();
         }
 
-        return DB::table('review_sessions')
+        $from = Carbon::now()->subDays(14)->startOfDay();
+
+        $reviewsByDate = DB::table('user_word_progress')
             ->whereIn('user_id', $userIds)
-            ->where('started_at', '>=', Carbon::now()->subDays(14))
+            ->whereNotNull('last_reviewed_at')
+            ->where('last_reviewed_at', '>=', $from)
+            ->selectRaw('DATE(last_reviewed_at) as date')
+            ->selectRaw('COUNT(*) as reviews')
+            ->groupByRaw('DATE(last_reviewed_at)')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $sessionStatsByDate = DB::table('review_sessions')
+            ->whereIn('user_id', $userIds)
+            ->where('started_at', '>=', $from)
             ->selectRaw('DATE(started_at) as date')
             ->selectRaw('SUM(correct_count) as correct')
             ->selectRaw('SUM(wrong_count) as wrong')
-            ->selectRaw('SUM(correct_count + wrong_count) as reviews')
             ->groupByRaw('DATE(started_at)')
-            ->orderBy('date')
-            ->get();
+            ->get()
+            ->keyBy('date');
+
+        $dates = $reviewsByDate->keys()
+            ->merge($sessionStatsByDate->keys())
+            ->unique()
+            ->sort()
+            ->values();
+
+        return $dates->map(function (string $date) use ($reviewsByDate, $sessionStatsByDate): object {
+            $sessionStats = $sessionStatsByDate->get($date);
+
+            return (object) [
+                'date' => $date,
+                'reviews' => (int) ($reviewsByDate->get($date)->reviews ?? 0),
+                'correct' => (int) ($sessionStats->correct ?? 0),
+                'wrong' => (int) ($sessionStats->wrong ?? 0),
+            ];
+        });
     }
 
     /**
@@ -127,38 +156,29 @@ class StudentLearningAnalyticsService
             ->selectRaw('COALESCE(AVG(ease_factor), 0) as avg_ease_factor')
             ->first();
 
-        $sessions = $student->reviewSessions()
-            ->where('started_at', '>=', Carbon::now()->subDays(14))
-            ->latest('started_at')
-            ->get(['id', 'started_at', 'finished_at', 'correct_count', 'wrong_count']);
-
         $recentSessions = $student->reviewSessions()
             ->latest('started_at')
             ->limit(20)
             ->get(['id', 'started_at', 'finished_at', 'correct_count', 'wrong_count'])
-            ->map(fn (ReviewSession $session): array => [
-                'id' => $session->id,
-                'started_at' => $session->started_at->toIso8601String(),
-                'finished_at' => $session->finished_at?->toIso8601String(),
-                'correct_count' => $session->correct_count,
-                'wrong_count' => $session->wrong_count,
-                'is_open' => $session->finished_at === null,
-            ])
+            ->map(fn (ReviewSession $session): array => $this->serializeSession($session))
             ->values()
             ->all();
 
-        $reviewsToday = $sessions
-            ->filter(fn (ReviewSession $session): bool => $session->started_at->isToday())
-            ->sum(fn (ReviewSession $session): int => $session->correct_count + $session->wrong_count);
+        $lastSessionModel = $student->reviewSessions()
+            ->latest('started_at')
+            ->first(['id', 'started_at', 'finished_at', 'correct_count', 'wrong_count']);
 
-        /** @var array<int, array{date: string, correct: int|float, wrong: int|float, reviews: int|float}> $dailyActivity */
-        $dailyActivity = $sessions
-            ->groupBy(fn (ReviewSession $session): string => $session->started_at->toDateString())
-            ->map(fn ($daySessions, string $date): array => [
-                'date' => $date,
-                'correct' => $daySessions->sum('correct_count'),
-                'wrong' => $daySessions->sum('wrong_count'),
-                'reviews' => $daySessions->sum(fn (ReviewSession $s): int => $s->correct_count + $s->wrong_count),
+        $reviewsToday = UserWordProgress::query()
+            ->where('user_id', $student->id)
+            ->whereDate('last_reviewed_at', Carbon::today())
+            ->count();
+
+        $dailyActivity = $this->dailyActivityForUsers(collect([$student->id]))
+            ->map(fn (object $point): array => [
+                'date' => (string) $point->date,
+                'reviews' => (int) $point->reviews,
+                'correct' => (int) $point->correct,
+                'wrong' => (int) $point->wrong,
             ])
             ->values()
             ->all();
@@ -178,8 +198,82 @@ class StudentLearningAnalyticsService
                 'avg_ease_factor' => round((float) ($performance->avg_ease_factor ?? 0), 2),
             ],
             'weakTopics' => $this->weakTopicsForUsers(collect([$student->id]), 10),
+            'lastSession' => $this->lastSessionDetail($student, $lastSessionModel),
             'recentSessions' => $recentSessions,
             'dailyActivity' => $dailyActivity,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function lastSessionDetail(User $student, ?ReviewSession $session): ?array
+    {
+        if ($session === null) {
+            return null;
+        }
+
+        $endedAt = $session->finished_at ?? Carbon::now();
+        $total = $session->correct_count + $session->wrong_count;
+
+        $reviewedWords = UserWordProgress::query()
+            ->with(['word.wordSet:id,title'])
+            ->where('user_id', $student->id)
+            ->whereNotNull('last_reviewed_at')
+            ->where('last_reviewed_at', '>=', $session->started_at)
+            ->when(
+                $session->finished_at !== null,
+                fn ($query) => $query->where('last_reviewed_at', '<=', $session->finished_at),
+            )
+            ->orderByDesc('last_reviewed_at')
+            ->limit(50)
+            ->get()
+            ->map(function (UserWordProgress $progress): array {
+                return [
+                    'id' => $progress->id,
+                    'word_id' => $progress->word_id,
+                    'text' => $progress->word?->text,
+                    'translation' => $progress->word?->translation,
+                    'word_set_title' => $progress->word?->wordSet?->title,
+                    'last_reviewed_at' => $progress->last_reviewed_at?->toIso8601String(),
+                    'ease_factor' => round((float) $progress->ease_factor, 2),
+                    'interval_days' => $progress->interval_days,
+                    'next_review_at' => $progress->next_review_at->toIso8601String(),
+                    'repetitions' => $progress->repetitions,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            ...$this->serializeSession($session),
+            'duration_seconds' => (int) $session->started_at->diffInSeconds($endedAt),
+            'accuracy_percent' => $total > 0
+                ? round(($session->correct_count / $total) * 100, 1)
+                : 0.0,
+            'reviewed_words' => $reviewedWords,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     started_at: string,
+     *     finished_at: string|null,
+     *     correct_count: int,
+     *     wrong_count: int,
+     *     is_open: bool
+     * }
+     */
+    private function serializeSession(ReviewSession $session): array
+    {
+        return [
+            'id' => $session->id,
+            'started_at' => $session->started_at->toIso8601String(),
+            'finished_at' => $session->finished_at?->toIso8601String(),
+            'correct_count' => $session->correct_count,
+            'wrong_count' => $session->wrong_count,
+            'is_open' => $session->finished_at === null,
         ];
     }
 }

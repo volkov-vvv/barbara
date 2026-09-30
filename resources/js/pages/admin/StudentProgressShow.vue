@@ -52,10 +52,30 @@ type Session = {
     is_open?: boolean;
 };
 
+type ReviewedWord = {
+    id: number;
+    word_id: number;
+    text: string | null;
+    translation: string | null;
+    word_set_title: string | null;
+    last_reviewed_at: string | null;
+    ease_factor: number;
+    interval_days: number;
+    next_review_at: string;
+    repetitions: number;
+};
+
+type LastSession = Session & {
+    duration_seconds: number;
+    accuracy_percent: number;
+    reviewed_words: ReviewedWord[];
+};
+
 const props = defineProps<{
     student: StudentInfo;
     performance: Performance;
     weakTopics: WeakTopic[];
+    lastSession: LastSession | null;
     recentSessions: Session[];
     dailyActivity: ActivityPoint[];
 }>();
@@ -87,6 +107,23 @@ function formatSessionDate(value: string | null): string {
     }
 
     return date.toLocaleString();
+}
+
+function formatDuration(seconds: number): string {
+    const total = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+
+    if (minutes > 0) {
+        return `${minutes}m ${secs}s`;
+    }
+
+    return `${secs}s`;
 }
 </script>
 
@@ -153,6 +190,166 @@ function formatSessionDate(value: string | null): string {
 
         <Card>
             <CardHeader>
+                <CardTitle>{{ t('admin.lastSession') }}</CardTitle>
+                <CardDescription>{{
+                    t('admin.lastSessionDescription')
+                }}</CardDescription>
+            </CardHeader>
+            <CardContent v-if="lastSession" class="space-y-5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span
+                        class="rounded-md px-2 py-0.5 text-xs font-medium"
+                        :class="
+                            lastSession.is_open || !lastSession.finished_at
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200'
+                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                        "
+                    >
+                        {{
+                            lastSession.is_open || !lastSession.finished_at
+                                ? t('admin.inProgress')
+                                : t('admin.finished')
+                        }}
+                    </span>
+                    <span class="text-sm text-muted-foreground">
+                        {{ formatSessionDate(lastSession.started_at) }}
+                        <template v-if="lastSession.finished_at">
+                            → {{ formatSessionDate(lastSession.finished_at) }}
+                        </template>
+                    </span>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                    <div class="rounded-lg border p-3">
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('admin.duration') }}
+                        </p>
+                        <p class="mt-1 text-lg font-semibold">
+                            {{ formatDuration(lastSession.duration_seconds) }}
+                        </p>
+                    </div>
+                    <div class="rounded-lg border p-3">
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('common.correct') }}
+                        </p>
+                        <p class="mt-1 text-lg font-semibold">
+                            {{ lastSession.correct_count }}
+                        </p>
+                    </div>
+                    <div class="rounded-lg border p-3">
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('common.wrong') }}
+                        </p>
+                        <p class="mt-1 text-lg font-semibold">
+                            {{ lastSession.wrong_count }}
+                        </p>
+                    </div>
+                    <div class="rounded-lg border p-3">
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('common.total') }}
+                        </p>
+                        <p class="mt-1 text-lg font-semibold">
+                            {{
+                                lastSession.correct_count +
+                                lastSession.wrong_count
+                            }}
+                        </p>
+                    </div>
+                    <div class="rounded-lg border p-3">
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('admin.accuracy') }}
+                        </p>
+                        <p class="mt-1 text-lg font-semibold">
+                            {{ lastSession.accuracy_percent }}%
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="mb-3 text-sm font-medium">
+                        {{
+                            t('admin.sessionReviewedWords', {
+                                count: lastSession.reviewed_words.length,
+                            })
+                        }}
+                    </h3>
+                    <div
+                        v-if="lastSession.reviewed_words.length"
+                        class="overflow-x-auto"
+                    >
+                        <table class="w-full min-w-[40rem] text-left text-sm">
+                            <thead class="border-b text-muted-foreground">
+                                <tr>
+                                    <th class="px-2 py-2 font-medium">
+                                        {{ t('admin.text') }}
+                                    </th>
+                                    <th class="px-2 py-2 font-medium">
+                                        {{ t('admin.translation') }}
+                                    </th>
+                                    <th class="px-2 py-2 font-medium">
+                                        {{ t('admin.title') }}
+                                    </th>
+                                    <th class="px-2 py-2 font-medium">
+                                        {{ t('admin.reviewedAt') }}
+                                    </th>
+                                    <th class="px-2 py-2 font-medium">
+                                        EF
+                                    </th>
+                                    <th class="px-2 py-2 font-medium">
+                                        {{ t('admin.nextReview') }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="word in lastSession.reviewed_words"
+                                    :key="word.id"
+                                    class="border-b last:border-0"
+                                >
+                                    <td class="px-2 py-3 font-medium">
+                                        {{ word.text }}
+                                    </td>
+                                    <td class="px-2 py-3 text-muted-foreground">
+                                        {{ word.translation }}
+                                    </td>
+                                    <td class="px-2 py-3 text-muted-foreground">
+                                        {{ word.word_set_title ?? '—' }}
+                                    </td>
+                                    <td class="px-2 py-3">
+                                        {{
+                                            formatSessionDate(
+                                                word.last_reviewed_at,
+                                            )
+                                        }}
+                                    </td>
+                                    <td class="px-2 py-3">
+                                        {{ word.ease_factor }}
+                                    </td>
+                                    <td class="px-2 py-3">
+                                        {{
+                                            formatSessionDate(
+                                                word.next_review_at,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p v-else class="text-sm text-muted-foreground">
+                        {{ t('admin.noSessionWords') }}
+                    </p>
+                </div>
+            </CardContent>
+            <CardContent v-else>
+                <p class="text-sm text-muted-foreground">
+                    {{ t('admin.noSessions') }}
+                </p>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
                 <CardTitle>{{ t('admin.regularity') }}</CardTitle>
                 <CardDescription>{{ t('admin.last14Days') }}</CardDescription>
             </CardHeader>
@@ -201,21 +398,21 @@ function formatSessionDate(value: string | null): string {
                     <table class="w-full min-w-[32rem] text-left text-sm">
                         <thead class="border-b text-muted-foreground">
                             <tr>
-                                <th class="px-2 py-2 font-medium">{{
-                                    t('admin.started')
-                                }}</th>
-                                <th class="px-2 py-2 font-medium">{{
-                                    t('common.status')
-                                }}</th>
-                                <th class="px-2 py-2 font-medium">{{
-                                    t('common.correct')
-                                }}</th>
-                                <th class="px-2 py-2 font-medium">{{
-                                    t('common.wrong')
-                                }}</th>
-                                <th class="px-2 py-2 font-medium">{{
-                                    t('common.total')
-                                }}</th>
+                                <th class="px-2 py-2 font-medium">
+                                    {{ t('admin.started') }}
+                                </th>
+                                <th class="px-2 py-2 font-medium">
+                                    {{ t('common.status') }}
+                                </th>
+                                <th class="px-2 py-2 font-medium">
+                                    {{ t('common.correct') }}
+                                </th>
+                                <th class="px-2 py-2 font-medium">
+                                    {{ t('common.wrong') }}
+                                </th>
+                                <th class="px-2 py-2 font-medium">
+                                    {{ t('common.total') }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
