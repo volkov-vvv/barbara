@@ -219,10 +219,19 @@
   },
   "auth": {
     "login": "Войти",
+    "loginTitle": "Вход в аккаунт",
+    "loginDescription": "Введите email и пароль, чтобы продолжить",
     "register": "Регистрация",
+    "registerTitle": "Создать аккаунт",
+    "registerDescription": "Заполните данные, чтобы зарегистрироваться",
     "email": "Адрес email",
     "password": "Пароль",
+    "confirmPassword": "Подтвердите пароль",
+    "name": "Имя",
     "remember": "Запомнить меня",
-    "forgot": "Забыли пароль?"
+    "forgot": "Забыли пароль?",
+    "noAccount": "Нет аккаунта?",
+    "haveAccount": "Уже есть аккаунт?",
+    "createAccount": "Создать аккаунт"
   }
 }

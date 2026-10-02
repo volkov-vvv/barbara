@@ -219,10 +219,19 @@
   },
   "auth": {
     "login": "Log in",
+    "loginTitle": "Log in to your account",
+    "loginDescription": "Enter your email and password to continue",
     "register": "Register",
+    "registerTitle": "Create an account",
+    "registerDescription": "Enter your details below to create your account",
     "email": "Email address",
     "password": "Password",
+    "confirmPassword": "Confirm password",
+    "name": "Name",
     "remember": "Remember me",
-    "forgot": "Forgot password?"
+    "forgot": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "createAccount": "Create account"
   }
 }

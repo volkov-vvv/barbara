@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -10,30 +11,33 @@ import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
+const { t } = useI18n();
+
 defineProps<{
     passwordRules: string;
 }>();
 
 defineOptions({
     layout: {
-        title: 'Create an account',
-        description: 'Enter your details below to create your account',
+        title: 'auth.registerTitle',
+        description: 'auth.registerDescription',
     },
 });
 </script>
 
 <template>
-    <Head title="Register" />
+    <Head :title="t('auth.register')" />
 
     <Form
-        v-bind="store.form()"
+        :action="store.url()"
+        method="post"
         :reset-on-success="['password', 'password_confirmation']"
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
-        <div class="grid gap-6">
+        <div class="grid gap-5">
             <div class="grid gap-2">
-                <Label for="name">Name</Label>
+                <Label for="name">{{ t('auth.name') }}</Label>
                 <Input
                     id="name"
                     type="text"
@@ -42,13 +46,13 @@ defineOptions({
                     :tabindex="1"
                     autocomplete="name"
                     name="name"
-                    placeholder="Full name"
+                    :placeholder="t('auth.name')"
                 />
                 <InputError :message="errors.name" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email">{{ t('auth.email') }}</Label>
                 <Input
                     id="email"
                     type="email"
@@ -62,28 +66,30 @@ defineOptions({
             </div>
 
             <div class="grid gap-2">
-                <Label for="password">Password</Label>
+                <Label for="password">{{ t('auth.password') }}</Label>
                 <PasswordInput
                     id="password"
                     required
                     :tabindex="3"
                     autocomplete="new-password"
                     name="password"
-                    placeholder="Password"
+                    :placeholder="t('auth.password')"
                     :passwordrules="passwordRules"
                 />
                 <InputError :message="errors.password" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="password_confirmation">Confirm password</Label>
+                <Label for="password_confirmation">{{
+                    t('auth.confirmPassword')
+                }}</Label>
                 <PasswordInput
                     id="password_confirmation"
                     required
                     :tabindex="4"
                     autocomplete="new-password"
                     name="password_confirmation"
-                    placeholder="Confirm password"
+                    :placeholder="t('auth.confirmPassword')"
                     :passwordrules="passwordRules"
                 />
                 <InputError :message="errors.password_confirmation" />
@@ -91,24 +97,28 @@ defineOptions({
 
             <Button
                 type="submit"
-                class="mt-2 w-full"
-                tabindex="5"
+                class="mt-1 w-full"
+                size="lg"
+                :tabindex="5"
                 :disabled="processing"
                 data-test="register-user-button"
             >
                 <Spinner v-if="processing" />
-                Create account
+                {{ t('auth.createAccount') }}
             </Button>
         </div>
 
-        <div class="text-center text-sm text-muted-foreground">
-            Already have an account?
+        <div
+            class="border-t border-slate-200 pt-5 text-center text-sm text-slate-600"
+        >
+            {{ t('auth.haveAccount') }}
             <TextLink
                 :href="login()"
-                class="underline underline-offset-4"
+                class="text-sky-700 hover:text-sky-800"
                 :tabindex="6"
-                >Log in</TextLink
             >
+                {{ t('auth.login') }}
+            </TextLink>
         </div>
     </Form>
 </template>

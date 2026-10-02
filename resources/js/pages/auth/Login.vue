@@ -17,8 +17,8 @@ const { t } = useI18n();
 
 defineOptions({
     layout: {
-        title: 'Вход в аккаунт',
-        description: 'Введите email и пароль, чтобы продолжить',
+        title: 'auth.loginTitle',
+        description: 'auth.loginDescription',
     },
 });
 
@@ -39,7 +39,8 @@ defineProps<{
     </div>
 
     <Form
-        v-bind="store.form()"
+        :action="store.url()"
+        method="post"
         :reset-on-success="['password']"
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
@@ -106,7 +107,7 @@ defineProps<{
         <div
             class="border-t border-slate-200 pt-5 text-center text-sm text-slate-600"
         >
-            Нет аккаунта?
+            {{ t('auth.noAccount') }}
             <TextLink
                 :href="register()"
                 class="text-sky-700 hover:text-sky-800"

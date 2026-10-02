@@ -1,12 +1,32 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { BookOpen } from '@lucide/vue';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { home } from '@/routes';
 
-defineProps<{
+const props = defineProps<{
     title?: string;
     description?: string;
 }>();
+
+const { t, te } = useI18n();
+
+const resolvedTitle = computed(() => {
+    if (!props.title) {
+        return '';
+    }
+
+    return te(props.title) ? t(props.title) : props.title;
+});
+
+const resolvedDescription = computed(() => {
+    if (!props.description) {
+        return '';
+    }
+
+    return te(props.description) ? t(props.description) : props.description;
+});
 </script>
 
 <template>
@@ -52,13 +72,13 @@ defineProps<{
                     <h1
                         class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl"
                     >
-                        {{ title }}
+                        {{ resolvedTitle }}
                     </h1>
                     <p
-                        v-if="description"
+                        v-if="resolvedDescription"
                         class="text-sm leading-relaxed text-slate-600"
                     >
-                        {{ description }}
+                        {{ resolvedDescription }}
                     </p>
                 </div>
 
