@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatPaginationLabel } from '@/lib/pagination';
 import { index as usersIndex } from '@/routes/admin/users';
 
 type ManagedUser = {
@@ -232,7 +233,7 @@ function onUserCreated(): void {
                                     :id="`role-${user.id}`"
                                     name="role"
                                     required
-                                    class="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                                    class="border-input h-9 w-full rounded-md border bg-transparent pl-3 pr-10 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                                     :value="user.role"
                                 >
                                     <option
@@ -269,7 +270,9 @@ function onUserCreated(): void {
                             size="sm"
                             :variant="link.active ? 'default' : 'outline'"
                         >
-                            <Link :href="link.url" v-html="link.label" />
+                            <Link :href="link.url">
+                                {{ formatPaginationLabel(link.label, t) }}
+                            </Link>
                         </Button>
                     </template>
                 </div>
@@ -327,7 +330,7 @@ function onUserCreated(): void {
                             id="create-role"
                             name="role"
                             required
-                            class="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                            class="border-input h-9 w-full rounded-md border bg-transparent pl-3 pr-10 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                         >
                             <option
                                 v-for="role in roles"

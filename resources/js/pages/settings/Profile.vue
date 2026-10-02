@@ -87,7 +87,7 @@ defineOptions({
                     id="locale"
                     name="locale"
                     required
-                    class="border-input mt-1 h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    class="border-input mt-1 h-9 w-full rounded-md border bg-transparent pl-3 pr-10 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     :value="user.locale ?? 'en'"
                 >
                     <option

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -11,12 +12,13 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import PasskeyVerify from '@/components/PasskeyVerify.vue';
+
+const { t } = useI18n();
 
 defineOptions({
     layout: {
-        title: 'Log in to your account',
-        description: 'Enter your email and password below to log in',
+        title: 'Вход в аккаунт',
+        description: 'Введите email и пароль, чтобы продолжить',
     },
 });
 
@@ -27,16 +29,14 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Log in" />
+    <Head :title="t('auth.login')" />
 
     <div
         v-if="status"
-        class="mb-4 text-center text-sm font-medium text-green-600"
+        class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700"
     >
         {{ status }}
     </div>
-
-    <PasskeyVerify />
 
     <Form
         v-bind="store.form()"
@@ -44,9 +44,9 @@ defineProps<{
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
-        <div class="grid gap-6">
+        <div class="grid gap-5">
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email">{{ t('auth.email') }}</Label>
                 <Input
                     id="email"
                     type="email"
@@ -61,15 +61,15 @@ defineProps<{
             </div>
 
             <div class="grid gap-2">
-                <div class="flex items-center justify-between">
-                    <Label for="password">Password</Label>
+                <div class="flex items-center justify-between gap-3">
+                    <Label for="password">{{ t('auth.password') }}</Label>
                     <TextLink
                         v-if="canResetPassword"
                         :href="request()"
-                        class="text-sm"
+                        class="text-sm text-sky-700 hover:text-sky-800"
                         :tabindex="5"
                     >
-                        Forgot your password?
+                        {{ t('auth.forgot') }}
                     </TextLink>
                 </div>
                 <PasswordInput
@@ -78,33 +78,42 @@ defineProps<{
                     required
                     :tabindex="2"
                     autocomplete="current-password"
-                    placeholder="Password"
+                    placeholder="••••••••"
                 />
                 <InputError :message="errors.password" />
             </div>
 
             <div class="flex items-center justify-between">
-                <Label for="remember" class="flex items-center space-x-3">
+                <Label for="remember" class="flex items-center gap-3">
                     <Checkbox id="remember" name="remember" :tabindex="3" />
-                    <span>Remember me</span>
+                    <span>{{ t('auth.remember') }}</span>
                 </Label>
             </div>
 
             <Button
                 type="submit"
-                class="mt-4 w-full"
+                class="mt-1 w-full"
+                size="lg"
                 :tabindex="4"
                 :disabled="processing"
                 data-test="login-button"
             >
                 <Spinner v-if="processing" />
-                Log in
+                {{ t('auth.login') }}
             </Button>
         </div>
 
-        <div class="text-center text-sm text-muted-foreground">
-            Don't have an account?
-            <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
+        <div
+            class="border-t border-slate-200 pt-5 text-center text-sm text-slate-600"
+        >
+            Нет аккаунта?
+            <TextLink
+                :href="register()"
+                class="text-sky-700 hover:text-sky-800"
+                :tabindex="6"
+            >
+                {{ t('auth.register') }}
+            </TextLink>
         </div>
     </Form>
 </template>

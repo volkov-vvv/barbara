@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import { BookOpen } from '@lucide/vue';
 
 const name = usePage().props.name;
 </script>
 
 <template>
-    <div
-        class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"
+    <span
+        class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm shadow-sky-900/20"
     >
-        <AppLogoIcon class="size-5 fill-current text-white dark:text-black" />
-    </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
+        <BookOpen class="size-5" stroke-width="2.25" />
+    </span>
+    <div
+        class="ml-2 grid flex-1 text-left text-sm group-data-[collapsible=icon]:hidden"
+    >
         <span class="mb-0.5 truncate leading-tight font-semibold">{{
             name
         }}</span>

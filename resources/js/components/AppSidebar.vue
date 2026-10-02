@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import {
     BookOpen,
+    ClipboardList,
     GraduationCap,
     LayoutGrid,
     Library,
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/composables/useAuth';
 import { dashboard } from '@/routes';
+import { index as adminApplications } from '@/routes/admin/applications';
 import { index as adminStudentProgress } from '@/routes/admin/student-progress';
 import { index as adminUsers } from '@/routes/admin/users';
 import { index as adminWordSets } from '@/routes/admin/word-sets';
@@ -74,6 +76,11 @@ const mainNavItems = computed<NavItem[]>(() => {
                 title: t('nav.users'),
                 href: adminUsers(),
                 icon: Users,
+            },
+            {
+                title: t('nav.applications'),
+                href: adminApplications(),
+                icon: ClipboardList,
             },
             {
                 title: t('nav.studentProgress'),
