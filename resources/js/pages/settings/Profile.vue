@@ -2,6 +2,7 @@
 import { Form, Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import AvatarCropField from '@/components/AvatarCropField.vue';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -52,18 +53,68 @@ defineOptions({
             class="space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
-                <Label for="name">{{ t('common.name') }}</Label>
-                <Input
-                    id="name"
-                    class="mt-1 block w-full"
-                    name="name"
-                    :default-value="user.name"
-                    required
-                    autocomplete="name"
-                    :placeholder="t('settings.fullName')"
-                />
-                <InputError class="mt-2" :message="errors.name" />
+            <AvatarCropField
+                input-id="avatar"
+                :current-avatar="user.avatar"
+                :alt="user.name"
+                :error="errors.avatar"
+            />
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid gap-2">
+                    <Label for="last_name">{{ t('common.lastName') }}</Label>
+                    <Input
+                        id="last_name"
+                        class="mt-1 block w-full"
+                        name="last_name"
+                        :default-value="user.last_name"
+                        required
+                        autocomplete="family-name"
+                        :placeholder="t('common.lastName')"
+                    />
+                    <InputError class="mt-2" :message="errors.last_name" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="first_name">{{ t('common.firstName') }}</Label>
+                    <Input
+                        id="first_name"
+                        class="mt-1 block w-full"
+                        name="first_name"
+                        :default-value="user.first_name"
+                        required
+                        autocomplete="given-name"
+                        :placeholder="t('common.firstName')"
+                    />
+                    <InputError class="mt-2" :message="errors.first_name" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="patronymic">{{ t('common.patronymic') }}</Label>
+                    <Input
+                        id="patronymic"
+                        class="mt-1 block w-full"
+                        name="patronymic"
+                        :default-value="user.patronymic ?? ''"
+                        autocomplete="additional-name"
+                        :placeholder="t('common.patronymic')"
+                    />
+                    <InputError class="mt-2" :message="errors.patronymic" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="phone">{{ t('common.phone') }}</Label>
+                    <Input
+                        id="phone"
+                        type="tel"
+                        class="mt-1 block w-full"
+                        name="phone"
+                        :default-value="user.phone ?? ''"
+                        autocomplete="tel"
+                        :placeholder="t('common.phone')"
+                    />
+                    <InputError class="mt-2" :message="errors.phone" />
+                </div>
             </div>
 
             <div class="grid gap-2">

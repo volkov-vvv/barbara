@@ -37,17 +37,25 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $request->safe()->except(['avatar', 'password']);
         /** @var UserRole $role */
         $role = $data['role'] instanceof UserRole ? $data['role'] : UserRole::from($data['role']);
 
-        $user = User::query()->create([
-            'name' => $data['name'],
+        $user = new User([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'patronymic' => $data['patronymic'] ?? null,
+            'phone' => $data['phone'] ?? null,
             'email' => $data['email'],
-            'password' => $data['password'],
+            'password' => $request->validated('password'),
             'role' => $role,
         ]);
 
+        if ($request->hasFile('avatar')) {
+            $user->avatar_path = $user->storeAvatar($request->file('avatar'));
+        }
+
+        $user->save();
         $user->syncRoles([$role->value]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('User created.')]);
@@ -57,18 +65,31 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $request->safe()->except(['avatar', 'remove_avatar', 'password']);
         /** @var UserRole $role */
         $role = $data['role'] instanceof UserRole ? $data['role'] : UserRole::from($data['role']);
 
         $user->fill([
-            'name' => $data['name'],
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'patronymic' => $data['patronymic'] ?? null,
+            'phone' => $data['phone'] ?? null,
             'email' => $data['email'],
             'role' => $role,
         ]);
 
-        if (! empty($data['password'])) {
-            $user->password = $data['password'];
+        if ($request->boolean('remove_avatar')) {
+            $user->clearAvatar();
+            $user->avatar_path = null;
+        }
+
+        if ($request->hasFile('avatar')) {
+            $user->clearAvatar();
+            $user->avatar_path = $user->storeAvatar($request->file('avatar'));
+        }
+
+        if ($request->filled('password')) {
+            $user->password = $request->validated('password');
         }
 
         $user->save();

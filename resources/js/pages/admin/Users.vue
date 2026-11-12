@@ -5,8 +5,10 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import StudentProgressController from '@/actions/App/Http/Controllers/Admin/StudentProgressController';
 import UserController from '@/actions/App/Http/Controllers/Admin/UserController';
+import AvatarCropField from '@/components/AvatarCropField.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -24,12 +26,18 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useInitials } from '@/composables/useInitials';
 import { formatPaginationLabel } from '@/lib/pagination';
 import { index as usersIndex } from '@/routes/admin/users';
 
 type ManagedUser = {
     id: number;
     name: string;
+    first_name: string;
+    last_name: string;
+    patronymic: string | null;
+    phone: string | null;
+    avatar: string | null;
     email: string;
     role: string;
 };
@@ -45,7 +53,8 @@ const props = defineProps<{
     roles: string[];
 }>();
 
-const { t } = useI18n();
+const { t, te } = useI18n();
+const { getInitials } = useInitials();
 
 defineOptions({
     layout: {
@@ -56,6 +65,12 @@ defineOptions({
 const editingId = ref<number | null>(null);
 const createOpen = ref(false);
 const createFormKey = ref(0);
+
+function roleLabel(role: string): string {
+    const key = `roles.${role}`;
+
+    return te(key) ? t(key) : role;
+}
 
 function openCreate(): void {
     createFormKey.value += 1;
@@ -121,7 +136,7 @@ function onUserCreated(): void {
                 :variant="filters.role === role ? 'default' : 'outline'"
                 @click="filterByRole(role)"
             >
-                {{ role }}
+                {{ roleLabel(role) }}
             </Button>
         </div>
 
@@ -139,11 +154,27 @@ function onUserCreated(): void {
                         v-if="editingId !== user.id"
                         class="flex flex-wrap items-center justify-between gap-3"
                     >
-                        <div>
-                            <p class="font-medium">{{ user.name }}</p>
-                            <p class="text-sm text-muted-foreground">
-                                {{ user.email }} · {{ user.role }}
-                            </p>
+                        <div class="flex min-w-0 items-center gap-3">
+                            <Avatar class="size-10 overflow-hidden rounded-lg">
+                                <AvatarImage
+                                    v-if="user.avatar"
+                                    :src="user.avatar"
+                                    :alt="user.name"
+                                />
+                                <AvatarFallback class="rounded-lg text-black dark:text-white">
+                                    {{ getInitials(user.name) }}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div class="min-w-0">
+                                <p class="font-medium">{{ user.name }}</p>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ user.email }} ·
+                                    {{ roleLabel(user.role) }}
+                                    <span v-if="user.phone">
+                                        · {{ user.phone }}
+                                    </span>
+                                </p>
+                            </div>
                         </div>
                         <div class="flex gap-2">
                             <Button
@@ -186,20 +217,62 @@ function onUserCreated(): void {
                         v-slot="{ errors, processing }"
                         @success="cancelEdit"
                     >
+                        <AvatarCropField
+                            :input-id="`avatar-${user.id}`"
+                            optional
+                            :current-avatar="user.avatar"
+                            :alt="user.name"
+                            :error="errors.avatar"
+                        />
                         <div class="grid gap-2 sm:grid-cols-2">
                             <div class="grid gap-2">
-                                <Label :for="`name-${user.id}`">{{
-                                    t('common.name')
+                                <Label :for="`last-name-${user.id}`">{{
+                                    t('common.lastName')
                                 }}</Label>
                                 <Input
-                                    :id="`name-${user.id}`"
-                                    name="name"
-                                    :default-value="user.name"
+                                    :id="`last-name-${user.id}`"
+                                    name="last_name"
+                                    :default-value="user.last_name"
                                     required
                                 />
-                                <InputError :message="errors.name" />
+                                <InputError :message="errors.last_name" />
                             </div>
                             <div class="grid gap-2">
+                                <Label :for="`first-name-${user.id}`">{{
+                                    t('common.firstName')
+                                }}</Label>
+                                <Input
+                                    :id="`first-name-${user.id}`"
+                                    name="first_name"
+                                    :default-value="user.first_name"
+                                    required
+                                />
+                                <InputError :message="errors.first_name" />
+                            </div>
+                            <div class="grid gap-2">
+                                <Label :for="`patronymic-${user.id}`">{{
+                                    t('common.patronymic')
+                                }}</Label>
+                                <Input
+                                    :id="`patronymic-${user.id}`"
+                                    name="patronymic"
+                                    :default-value="user.patronymic ?? ''"
+                                />
+                                <InputError :message="errors.patronymic" />
+                            </div>
+                            <div class="grid gap-2">
+                                <Label :for="`phone-${user.id}`">{{
+                                    t('common.phone')
+                                }}</Label>
+                                <Input
+                                    :id="`phone-${user.id}`"
+                                    type="tel"
+                                    name="phone"
+                                    :default-value="user.phone ?? ''"
+                                />
+                                <InputError :message="errors.phone" />
+                            </div>
+                            <div class="grid gap-2 sm:col-span-2">
                                 <Label :for="`email-${user.id}`">{{
                                     t('common.email')
                                 }}</Label>
@@ -241,7 +314,7 @@ function onUserCreated(): void {
                                         :key="role"
                                         :value="role"
                                     >
-                                        {{ role }}
+                                        {{ roleLabel(role) }}
                                     </option>
                                 </select>
                                 <InputError :message="errors.role" />
@@ -280,7 +353,7 @@ function onUserCreated(): void {
         </Card>
 
         <Dialog v-model:open="createOpen">
-            <DialogContent class="sm:max-w-md">
+            <DialogContent class="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>{{ t('admin.createUser') }}</DialogTitle>
                     <DialogDescription>
@@ -295,10 +368,52 @@ function onUserCreated(): void {
                     v-slot="{ errors, processing }"
                     @success="onUserCreated"
                 >
-                    <div class="grid gap-2">
-                        <Label for="create-name">{{ t('common.name') }}</Label>
-                        <Input id="create-name" name="name" required />
-                        <InputError :message="errors.name" />
+                    <AvatarCropField
+                        input-id="create-avatar"
+                        optional
+                        :error="errors.avatar"
+                    />
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="create-last-name">{{
+                                t('common.lastName')
+                            }}</Label>
+                            <Input
+                                id="create-last-name"
+                                name="last_name"
+                                required
+                            />
+                            <InputError :message="errors.last_name" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="create-first-name">{{
+                                t('common.firstName')
+                            }}</Label>
+                            <Input
+                                id="create-first-name"
+                                name="first_name"
+                                required
+                            />
+                            <InputError :message="errors.first_name" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="create-patronymic">{{
+                                t('common.patronymic')
+                            }}</Label>
+                            <Input id="create-patronymic" name="patronymic" />
+                            <InputError :message="errors.patronymic" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="create-phone">{{
+                                t('common.phone')
+                            }}</Label>
+                            <Input
+                                id="create-phone"
+                                type="tel"
+                                name="phone"
+                            />
+                            <InputError :message="errors.phone" />
+                        </div>
                     </div>
                     <div class="grid gap-2">
                         <Label for="create-email">{{
@@ -337,7 +452,7 @@ function onUserCreated(): void {
                                 :key="role"
                                 :value="role"
                             >
-                                {{ role }}
+                                {{ roleLabel(role) }}
                             </option>
                         </select>
                         <InputError :message="errors.role" />

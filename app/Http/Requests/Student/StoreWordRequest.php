@@ -26,8 +26,16 @@ class StoreWordRequest extends FormRequest
         return [
             'text' => ['required', 'string', 'max:255'],
             'translation' => ['required', 'string', 'max:255'],
-            'example_sentence' => ['required', 'string'],
+            'example_sentence' => ['nullable', 'string'],
             'audio_url' => ['nullable', 'string', 'max:2048'],
+            'image' => ['nullable', 'image', 'max:2048'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('example_sentence')) {
+            $this->merge(['example_sentence' => '']);
+        }
     }
 }

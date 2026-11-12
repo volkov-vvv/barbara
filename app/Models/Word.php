@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -18,12 +19,14 @@ use Illuminate\Support\Carbon;
  * @property string $translation
  * @property string $example_sentence
  * @property string|null $audio_url
+ * @property string|null $image_path
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read WordSet $wordSet
+ * @property-read Collection<int, Theme> $themes
  * @property-read Collection<int, UserWordProgress> $progress
  */
-#[Fillable(['word_set_id', 'text', 'translation', 'example_sentence', 'audio_url'])]
+#[Fillable(['word_set_id', 'text', 'translation', 'example_sentence', 'audio_url', 'image_path'])]
 class Word extends Model
 {
     /**
@@ -32,6 +35,14 @@ class Word extends Model
     public function wordSet(): BelongsTo
     {
         return $this->belongsTo(WordSet::class);
+    }
+
+    /**
+     * @return BelongsToMany<Theme, $this>
+     */
+    public function themes(): BelongsToMany
+    {
+        return $this->belongsToMany(Theme::class)->withTimestamps();
     }
 
     /**

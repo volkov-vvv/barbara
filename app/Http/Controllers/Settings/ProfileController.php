@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Settings;
 
 use App\Enums\Locale;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -34,10 +37,24 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
-        $request->user()->save();
+        /** @var User $user */
+        $user = $request->user();
+        $data = $request->safe()->except(['avatar', 'remove_avatar']);
 
-        $locale = $request->user()->locale->value;
+        if ($request->boolean('remove_avatar')) {
+            $user->clearAvatar();
+            $data['avatar_path'] = null;
+        }
+
+        if ($request->hasFile('avatar')) {
+            $user->clearAvatar();
+            $data['avatar_path'] = $user->storeAvatar($request->file('avatar'));
+        }
+
+        $user->fill($data);
+        $user->save();
+
+        $locale = $user->locale->value;
         App::setLocale($locale);
 
         Inertia::flash('toast', [

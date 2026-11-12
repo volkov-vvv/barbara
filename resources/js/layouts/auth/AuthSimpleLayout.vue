@@ -57,7 +57,7 @@ const resolvedDescription = computed(() => {
                         <BookOpen class="size-5" stroke-width="2.25" />
                     </span>
                     <span class="text-sm font-semibold tracking-tight">
-                        Barbara
+                        Barbara&amp;Valery
                     </span>
                 </Link>
                 <p class="text-xs tracking-[0.18em] text-slate-500 uppercase">

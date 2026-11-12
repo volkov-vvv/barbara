@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\User;
 
 test('profile page is displayed', function () {
@@ -18,7 +20,10 @@ test('profile information can be updated', function () {
     $response = $this
         ->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'patronymic' => 'Иванович',
+            'phone' => '+79001234567',
             'email' => 'test@example.com',
             'locale' => 'ru',
         ]);
@@ -29,9 +34,13 @@ test('profile information can be updated', function () {
 
     $user->refresh();
 
-    expect($user->name)->toBe('Test User');
-    expect($user->email)->toBe('test@example.com');
-    expect($user->locale->value)->toBe('ru');
+    expect($user->first_name)->toBe('Иван')
+        ->and($user->last_name)->toBe('Иванов')
+        ->and($user->patronymic)->toBe('Иванович')
+        ->and($user->phone)->toBe('+79001234567')
+        ->and($user->name)->toBe('Иванов Иван Иванович')
+        ->and($user->email)->toBe('test@example.com')
+        ->and($user->locale->value)->toBe('ru');
 });
 
 test('profile locale must be supported', function () {
@@ -41,7 +50,10 @@ test('profile locale must be supported', function () {
         ->actingAs($user)
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => $user->name,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'patronymic' => $user->patronymic,
+            'phone' => $user->phone,
             'email' => $user->email,
             'locale' => 'de',
         ]);

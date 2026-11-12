@@ -19,7 +19,7 @@ class PublicDictionaryCache
 
     public const string DICTIONARIES_KEY = 'public.dictionaries.v2.index';
 
-    public const string DICTIONARY_KEY_PREFIX = 'public.dictionaries.v2.show.';
+    public const string DICTIONARY_KEY_PREFIX = 'public.dictionaries.v3.show.';
 
     public const int TTL_SECONDS = 3600;
 
@@ -84,7 +84,7 @@ class PublicDictionaryCache
             self::TTL_SECONDS,
             function () use ($wordSetId): ?array {
                 $wordSet = WordSet::query()
-                    ->with(['language:id,code,name', 'words'])
+                    ->with(['language:id,code,name', 'words.themes:id,name'])
                     ->whereNull('created_by')
                     ->find($wordSetId);
 

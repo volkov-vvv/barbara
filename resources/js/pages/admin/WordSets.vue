@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Plus } from '@lucide/vue';
+import { ArrowRight, Plus } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import WordSetController from '@/actions/App/Http/Controllers/Admin/WordSetController';
@@ -107,25 +107,21 @@ function onDictionaryCreated(): void {
         </div>
 
         <div class="flex flex-wrap items-end gap-3">
-            <div class="grid gap-2">
-                <Label for="filter_language_id">{{
-                    t('admin.language')
-                }}</Label>
+            <div class="space-y-1.5">
+                <Label for="filter-language">{{ t('admin.language') }}</Label>
                 <select
-                    id="filter_language_id"
+                    id="filter-language"
                     class="border-input h-9 min-w-48 rounded-md border bg-transparent pl-3 pr-10 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     :value="filters.language_id ?? ''"
                     @change="filterByLanguage"
                 >
-                    <option value="">
-                        {{ t('admin.allLanguages') }}
-                    </option>
+                    <option value="">{{ t('admin.allLanguages') }}</option>
                     <option
                         v-for="language in languages"
                         :key="language.id"
                         :value="language.id"
                     >
-                        {{ language.name }} ({{ language.code }})
+                        {{ language.name }}
                     </option>
                 </select>
             </div>
@@ -135,18 +131,7 @@ function onDictionaryCreated(): void {
             <CardHeader>
                 <CardTitle>{{ t('admin.dictionariesList') }}</CardTitle>
             </CardHeader>
-            <CardContent class="space-y-3">
-                <div
-                    v-if="!wordSets.data.length"
-                    class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
-                >
-                    {{
-                        filters.language_id
-                            ? t('admin.noDictionariesForLanguage')
-                            : t('admin.noDictionariesYet')
-                    }}
-                </div>
-
+            <CardContent class="space-y-4">
                 <div
                     v-for="wordSet in wordSets.data"
                     :key="wordSet.id"
@@ -166,11 +151,10 @@ function onDictionaryCreated(): void {
                     <div class="flex gap-2">
                         <Button as-child size="sm" variant="outline">
                             <Link
-                                :href="
-                                    WordSetController.show.url(wordSet.id)
-                                "
+                                :href="WordSetController.view.url(wordSet.id)"
                             >
-                                {{ t('common.edit') }}
+                                <ArrowRight class="size-4" />
+                                {{ t('common.go') }}
                             </Link>
                         </Button>
                         <Button

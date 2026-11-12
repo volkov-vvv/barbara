@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Concerns;
 
 use App\Models\User;
@@ -16,17 +18,18 @@ trait ProfileValidationRules
     protected function profileRules(?int $userId = null): array
     {
         return [
-            'name' => $this->nameRules(),
+            'first_name' => $this->namePartRules(),
+            'last_name' => $this->namePartRules(),
+            'patronymic' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
             'email' => $this->emailRules($userId),
         ];
     }
 
     /**
-     * Get the validation rules used to validate user names.
-     *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
-    protected function nameRules(): array
+    protected function namePartRules(): array
     {
         return ['required', 'string', 'max:255'];
     }

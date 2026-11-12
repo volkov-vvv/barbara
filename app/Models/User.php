@@ -9,13 +9,16 @@ use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -24,6 +27,11 @@ use Spatie\Permission\Traits\HasRoles;
 /**
  * @property int $id
  * @property string $name
+ * @property string $first_name
+ * @property string $last_name
+ * @property string|null $patronymic
+ * @property string|null $phone
+ * @property string|null $avatar_path
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
@@ -36,18 +44,116 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read string|null $avatar
  * @property-read Collection<int, User> $students
  * @property-read Collection<int, User> $parents
  * @property-read Collection<int, WordSet> $wordSets
  * @property-read Collection<int, UserWordProgress> $wordProgress
  * @property-read Collection<int, ReviewSession> $reviewSessions
  */
-#[Fillable(['name', 'email', 'password', 'role', 'daily_word_goal', 'locale'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Fillable([
+    'name',
+    'first_name',
+    'last_name',
+    'patronymic',
+    'phone',
+    'avatar_path',
+    'email',
+    'password',
+    'role',
+    'daily_word_goal',
+    'locale',
+])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    /**
+     * @var list<string>
+     */
+    protected $appends = ['avatar'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            $composed = $user->composeDisplayName();
+
+            if ($composed !== '') {
+                $user->name = $composed;
+            }
+        });
+
+        static::deleting(function (User $user): void {
+            $user->clearAvatar();
+        });
+    }
+
+    /**
+     * Build a display name from ФИО parts.
+     */
+    public function composeDisplayName(): string
+    {
+        $parts = array_values(array_filter(
+            [
+                trim((string) ($this->last_name ?? '')),
+                trim((string) ($this->first_name ?? '')),
+                trim((string) ($this->patronymic ?? '')),
+            ],
+            static fn (string $part): bool => $part !== '',
+        ));
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * Public URL for the user avatar, if any.
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function avatar(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if (! is_string($this->avatar_path) || $this->avatar_path === '') {
+                return null;
+            }
+
+            return Storage::disk('public')->url($this->avatar_path);
+        });
+    }
+
+    public function storeAvatar(UploadedFile $image): string
+    {
+        $safeName = preg_replace(
+            '/[^A-Za-z0-9._-]+/',
+            '_',
+            $image->getClientOriginalName(),
+        ) ?: 'avatar';
+
+        $storedPath = $image->storeAs(
+            'avatars',
+            uniqid('avatar_', true).'_'.$safeName,
+            'public',
+        );
+
+        abort_unless(is_string($storedPath) && $storedPath !== '', 500);
+
+        return $storedPath;
+    }
+
+    public function clearAvatar(): void
+    {
+        if (! is_string($this->avatar_path) || $this->avatar_path === '') {
+            return;
+        }
+
+        if (Storage::disk('public')->exists($this->avatar_path)) {
+            Storage::disk('public')->delete($this->avatar_path);
+        }
+
+        $this->avatar_path = null;
+    }
 
     /**
      * Get the attributes that should be cast.

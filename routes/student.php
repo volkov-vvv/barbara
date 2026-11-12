@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Student\QuizController;
 use App\Http\Controllers\Student\ReviewController;
 use App\Http\Controllers\Student\WordController;
 use App\Http\Controllers\Student\WordSetController;
@@ -17,17 +18,24 @@ Route::middleware(['auth', 'role:student'])
         Route::resource('reviews', ReviewController::class)
             ->only(['index', 'store']);
 
+        Route::post('quizzes/more', [QuizController::class, 'requestMore'])
+            ->name('quizzes.more');
+
+        Route::resource('quizzes', QuizController::class)
+            ->only(['index', 'store']);
+
         Route::resource('word-sets', WordSetController::class)
             ->only(['index', 'store', 'show', 'update', 'destroy'])
             ->parameters(['word-sets' => 'wordSet']);
 
         Route::resource('word-sets.words', WordController::class)
-            ->only(['store', 'update', 'destroy'])
+            ->only(['show', 'store', 'update', 'destroy'])
             ->parameters([
                 'word-sets' => 'wordSet',
                 'words' => 'word',
             ])
             ->names([
+                'show' => 'words.show',
                 'store' => 'words.store',
                 'update' => 'words.update',
                 'destroy' => 'words.destroy',

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Settings;
 
 use App\Concerns\ProfileValidationRules;
@@ -22,6 +24,20 @@ class ProfileUpdateRequest extends FormRequest
         return [
             ...$this->profileRules($this->user()->id),
             'locale' => ['required', 'string', Rule::enum(Locale::class)],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'remove_avatar' => ['sometimes', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('remove_avatar')) {
+            $this->merge([
+                'remove_avatar' => filter_var(
+                    $this->input('remove_avatar'),
+                    FILTER_VALIDATE_BOOLEAN,
+                ),
+            ]);
+        }
     }
 }

@@ -55,7 +55,7 @@ const highlights = [
                         <BookOpen class="size-5" stroke-width="2.25" />
                     </span>
                     <span class="text-sm font-semibold tracking-tight">
-                        Barbara
+                        Barbara&amp;Valery
                     </span>
                 </Link>
                 <div class="flex items-center gap-3">

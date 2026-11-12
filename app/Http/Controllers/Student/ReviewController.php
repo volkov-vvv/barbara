@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserWordProgress;
 use App\Models\Word;
 use App\Services\SpacedRepetitionService;
+use App\Services\StudentReviewStatsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,10 @@ use Inertia\Response;
 
 class ReviewController extends Controller
 {
+    public function __construct(
+        private readonly StudentReviewStatsService $reviewStats,
+    ) {}
+
     public function index(Request $request): Response
     {
         /** @var User $user */
@@ -39,6 +44,7 @@ class ReviewController extends Controller
             'cards' => $dueCards,
             'dueCount' => $dueCards->count(),
             'availableNewCount' => $this->availableNewWordsQuery($user)->count(),
+            'stats' => $this->reviewStats->forUser($user),
         ]);
     }
 

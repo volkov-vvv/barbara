@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ApplicationController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\ParentStudentController;
 use App\Http\Controllers\Admin\StudentProgressController;
+use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WordController;
 use App\Http\Controllers\Admin\WordSetController;
@@ -40,6 +41,20 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('languages', LanguageController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
+        Route::resource('themes', ThemeController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
+
+        Route::get('word-sets/{wordSet}/view', [WordSetController::class, 'view'])
+            ->name('word-sets.view');
+        Route::get('word-sets/{wordSet}/view/export/excel', [WordSetController::class, 'viewExportExcel'])
+            ->name('word-sets.view.export.excel');
+        Route::get('word-sets/{wordSet}/view/export/pdf', [WordSetController::class, 'viewExportPdf'])
+            ->name('word-sets.view.export.pdf');
+        Route::get('word-sets/{wordSet}/export', [WordSetController::class, 'exportOptions'])
+            ->name('word-sets.export.options');
+        Route::get('word-sets/{wordSet}/export/pdf', [WordSetController::class, 'exportPdf'])
+            ->name('word-sets.export.pdf');
+
         Route::resource('word-sets', WordSetController::class)
             ->only(['index', 'store', 'show', 'update', 'destroy'])
             ->parameters(['word-sets' => 'wordSet']);
@@ -48,12 +63,13 @@ Route::middleware(['auth', 'role:admin'])
             ->name('words.import');
 
         Route::resource('word-sets.words', WordController::class)
-            ->only(['store', 'update', 'destroy'])
+            ->only(['show', 'store', 'update', 'destroy'])
             ->parameters([
                 'word-sets' => 'wordSet',
                 'words' => 'word',
             ])
             ->names([
+                'show' => 'words.show',
                 'store' => 'words.store',
                 'update' => 'words.update',
                 'destroy' => 'words.destroy',

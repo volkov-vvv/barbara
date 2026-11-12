@@ -14,8 +14,8 @@ const name = usePage().props.name;
     <div
         class="ml-2 grid flex-1 text-left text-sm group-data-[collapsible=icon]:hidden"
     >
-        <span class="mb-0.5 truncate leading-tight font-semibold">{{
-            name
+        <span class="mb-0.5 leading-tight font-semibold whitespace-nowrap">{{
+            name || 'Barbara&Valery'
         }}</span>
     </div>
 </template>

@@ -37,18 +37,58 @@ defineOptions({
     >
         <div class="grid gap-5">
             <div class="grid gap-2">
-                <Label for="name">{{ t('auth.name') }}</Label>
+                <Label for="last_name">{{ t('common.lastName') }}</Label>
                 <Input
-                    id="name"
+                    id="last_name"
                     type="text"
                     required
                     v-focus
                     :tabindex="1"
-                    autocomplete="name"
-                    name="name"
-                    :placeholder="t('auth.name')"
+                    autocomplete="family-name"
+                    name="last_name"
+                    :placeholder="t('common.lastName')"
                 />
-                <InputError :message="errors.name" />
+                <InputError :message="errors.last_name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="first_name">{{ t('common.firstName') }}</Label>
+                <Input
+                    id="first_name"
+                    type="text"
+                    required
+                    :tabindex="2"
+                    autocomplete="given-name"
+                    name="first_name"
+                    :placeholder="t('common.firstName')"
+                />
+                <InputError :message="errors.first_name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="patronymic">{{ t('common.patronymic') }}</Label>
+                <Input
+                    id="patronymic"
+                    type="text"
+                    :tabindex="3"
+                    autocomplete="additional-name"
+                    name="patronymic"
+                    :placeholder="t('common.patronymic')"
+                />
+                <InputError :message="errors.patronymic" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="phone">{{ t('common.phone') }}</Label>
+                <Input
+                    id="phone"
+                    type="tel"
+                    :tabindex="4"
+                    autocomplete="tel"
+                    name="phone"
+                    :placeholder="t('common.phone')"
+                />
+                <InputError :message="errors.phone" />
             </div>
 
             <div class="grid gap-2">
@@ -57,7 +97,7 @@ defineOptions({
                     id="email"
                     type="email"
                     required
-                    :tabindex="2"
+                    :tabindex="5"
                     autocomplete="email"
                     name="email"
                     placeholder="email@example.com"
@@ -70,7 +110,7 @@ defineOptions({
                 <PasswordInput
                     id="password"
                     required
-                    :tabindex="3"
+                    :tabindex="6"
                     autocomplete="new-password"
                     name="password"
                     :placeholder="t('auth.password')"
@@ -86,7 +126,7 @@ defineOptions({
                 <PasswordInput
                     id="password_confirmation"
                     required
-                    :tabindex="4"
+                    :tabindex="7"
                     autocomplete="new-password"
                     name="password_confirmation"
                     :placeholder="t('auth.confirmPassword')"
@@ -99,7 +139,7 @@ defineOptions({
                 type="submit"
                 class="mt-1 w-full"
                 size="lg"
-                :tabindex="5"
+                :tabindex="8"
                 :disabled="processing"
                 data-test="register-user-button"
             >
@@ -115,7 +155,7 @@ defineOptions({
             <TextLink
                 :href="login()"
                 class="text-sky-700 hover:text-sky-800"
-                :tabindex="6"
+                :tabindex="9"
             >
                 {{ t('auth.login') }}
             </TextLink>

@@ -2,23 +2,20 @@
 import { Link } from '@inertiajs/vue3';
 import {
     BookOpen,
-    ClipboardList,
-    GraduationCap,
     LayoutGrid,
     Library,
     LineChart,
+    ListChecks,
+    Tags,
     Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLogo from '@/components/AppLogo.vue';
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
-import NavUser from '@/components/NavUser.vue';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -26,11 +23,11 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/composables/useAuth';
 import { dashboard } from '@/routes';
-import { index as adminApplications } from '@/routes/admin/applications';
-import { index as adminStudentProgress } from '@/routes/admin/student-progress';
+import { index as adminThemes } from '@/routes/admin/themes';
 import { index as adminUsers } from '@/routes/admin/users';
 import { index as adminWordSets } from '@/routes/admin/word-sets';
 import { index as parentAnalytics } from '@/routes/parent/analytics';
+import { index as studentQuizzes } from '@/routes/student/quizzes';
 import { index as studentReviews } from '@/routes/student/reviews';
 import { index as studentWordSets } from '@/routes/student/word-sets';
 import type { NavItem } from '@/types';
@@ -50,9 +47,20 @@ const mainNavItems = computed<NavItem[]>(() => {
     if (hasRole('student')) {
         items.push(
             {
-                title: t('nav.reviews'),
-                href: studentReviews(),
+                title: t('nav.practice'),
                 icon: BookOpen,
+                children: [
+                    {
+                        title: t('nav.reviews'),
+                        href: studentReviews(),
+                        icon: BookOpen,
+                    },
+                    {
+                        title: t('nav.quiz'),
+                        href: studentQuizzes(),
+                        icon: ListChecks,
+                    },
+                ],
             },
             {
                 title: t('nav.myWordSets'),
@@ -78,27 +86,20 @@ const mainNavItems = computed<NavItem[]>(() => {
                 icon: Users,
             },
             {
-                title: t('nav.applications'),
-                href: adminApplications(),
-                icon: ClipboardList,
-            },
-            {
-                title: t('nav.studentProgress'),
-                href: adminStudentProgress(),
-                icon: GraduationCap,
-            },
-            {
                 title: t('nav.dictionaries'),
                 href: adminWordSets(),
                 icon: Library,
+            },
+            {
+                title: t('nav.themes'),
+                href: adminThemes(),
+                icon: Tags,
             },
         );
     }
 
     return items;
 });
-
-const footerNavItems: NavItem[] = [];
 </script>
 
 <template>
@@ -118,11 +119,6 @@ const footerNavItems: NavItem[] = [];
         <SidebarContent>
             <NavMain :items="mainNavItems" />
         </SidebarContent>
-
-        <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
-            <NavUser />
-        </SidebarFooter>
     </Sidebar>
     <slot />
 </template>
